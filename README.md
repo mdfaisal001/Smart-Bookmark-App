@@ -2,8 +2,8 @@
 
 A modern full-stack bookmark manager built using **Next.js (App Router)** and **Supabase**, featuring secure authentication and real-time updates.
 
-🔗 Live Demo: _Add your Vercel URL here_  
-📂 GitHub Repo: _Add your repository link here_
+🔗 Live Demo: (https://smart-bookmark-app-ochre-five.vercel.app/)
+📂 GitHub Repo: https://github.com/mdfaisal001/Smart-Bookmark-App
 
 ---
 
