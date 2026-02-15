@@ -37,18 +37,40 @@ export default function Dashboard() {
       setUser(data.user)
       fetchBookmarks()
 
+      // NOTE: No filter here — Supabase only sends user_id on DELETE events,
+      // so a filter of user_id=eq.X silently drops cross-tab DELETE events.
+      // Instead we listen to all events and handle each type manually.
       channel = supabase
         .channel('bookmarks-channel')
         .on(
           'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'bookmarks',
-            filter: `user_id=eq.${data.user.id}`
-          },
-          () => {
-            fetchBookmarks()
+          { event: 'INSERT', schema: 'public', table: 'bookmarks' },
+          (payload) => {
+            // Only add if it belongs to this user
+            if (payload.new.user_id !== data.user.id) return
+            setBookmarks((prev) => {
+              // Avoid duplicates (in case this tab already added it optimistically)
+              if (prev.find((b) => b.id === payload.new.id)) return prev
+              return [payload.new, ...prev]
+            })
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'bookmarks' },
+          (payload) => {
+            // payload.old always has the id on DELETE — works reliably cross-tab
+            setBookmarks((prev) => prev.filter((b) => b.id !== payload.old.id))
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'bookmarks' },
+          (payload) => {
+            if (payload.new.user_id !== data.user.id) return
+            setBookmarks((prev) =>
+              prev.map((b) => (b.id === payload.new.id ? payload.new : b))
+            )
           }
         )
         .subscribe()
