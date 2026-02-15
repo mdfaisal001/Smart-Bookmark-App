@@ -176,6 +176,85 @@ lib/
 
 ---
 
+## Challenges Faced & How I Solved Them
+
+### 1. Google OAuth Not Redirecting in Production
+
+**Problem:**  
+After deploying to Vercel, Google login was not redirecting correctly.
+
+**Cause:**  
+The production domain was not added in Supabase Authentication → URL Configuration.
+
+**Solution:**  
+Added:
+
+- Site URL → https://smart-bookmark-app-ochre-five.vercel.app
+- Redirect URL → https://smart-bookmark-app-ochre-five.vercel.app/dashboard
+
+This fixed the OAuth redirect flow.
+
+---
+
+### 2. supabaseUrl is required Error
+
+**Problem:**  
+App crashed locally with "supabaseUrl is required".
+
+**Cause:**  
+Environment variables were not loaded correctly.
+
+**Solution:**  
+Added `.env.local` file at project root and restarted the development server.
+
+---
+
+### 3. Row Level Security Blocking Queries
+
+**Problem:**  
+Inserts and selects were failing silently.
+
+**Cause:**  
+RLS was enabled but policies were not configured properly.
+
+**Solution:**  
+Created policies:
+
+- SELECT → user_id = auth.uid()
+- INSERT → user_id = auth.uid()
+- DELETE → user_id = auth.uid()
+
+This ensured bookmarks remain private per user.
+
+---
+
+### 4. Realtime Not Updating Across Tabs
+
+**Problem:**  
+Bookmarks did not update automatically in another tab.
+
+**Cause:**  
+Table was not added to Supabase Realtime publication.
+
+**Solution:**  
+Enabled Realtime for `bookmarks` table and added a postgres_changes subscription filtered by user_id.
+
+---
+
+### 5. Delete Not Updating UI Instantly
+
+**Problem:**  
+Deleted bookmark disappeared only after refresh.
+
+**Solution:**  
+Implemented optimistic UI update using:
+
+```js
+setBookmarks((prev) => prev.filter((b) => b.id !== bookmark.id));
+```
+
+This improved user experience.
+
 ## 👨‍💻 Author
 
 Mohammed Faisal
